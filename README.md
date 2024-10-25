@@ -22,7 +22,7 @@ You need to join the SteamDB server and set the follow of [#free-promotions](htt
         "token" : "Bot token",
         "ID" : "Bot ID"
     },
-    "secruity" : {
+    "security" : {
         "USER_ID": "Your own user id",
         "SERVER_ID": "Your own server id",
         "IP" : "Here you put your ASF panel IP:PORT",

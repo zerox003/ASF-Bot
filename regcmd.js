@@ -6,7 +6,8 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 async function fetchBots() {
     try {
-        const response = await fetch("https://" + config.secruity.IP + "/Api/Bot/ASF", {
+        await waitForASFOnline();
+        const response = await fetch(`https://${config.security.IP}/Api/Bot/ASF`, {
             method: "get",
             headers: {
                 "Content-Type": "application/json",
@@ -22,6 +23,33 @@ async function fetchBots() {
         console.error("Fetch error:", error);
         return [];
     }
+}
+
+async function waitForASFOnline() {
+    return new Promise(async (resolve, reject) => {
+        const checkInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`https://${config.security.IP}/HealthCheck`, { method: "get" });
+
+                if (response.status === 200) {
+                    clearInterval(checkInterval);
+                    resolve();
+                } else if (response.status === 502) {
+                    console.log(`ASF is booting...`);
+                } else {
+                    console.log(`Unexpected status: ${response.status}`);
+                }
+            } catch (error) {
+                if (error.code === "ETIMEDOUT" || error.code === "ECONNREFUSED") {
+                    console.log(`ASF is offline or booting.`);
+                } else {
+                    console.error("Fetch error:", error);
+                    clearInterval(checkInterval);
+                    reject(error);
+                }
+            }
+        }, 10000);
+    });
 }
 
 const staticCommands = [
@@ -82,7 +110,7 @@ async function registerCommands() {
     }
 
     const pause = {
-        "name" : "pause",
+        "name": "pause",
         "description": "Pause bots farming",
         "options": [
             {

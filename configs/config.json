@@ -3,7 +3,7 @@
         "token" : "Bot token",
         "ID" : "Bot ID"
     },
-    "secruity" : {
+    "security" : {
         "USER_ID": "Your own user id",
         "SERVER_ID": "Your own guild id",
         "IP" : "Here you put your ASF panel IP:PORT",
