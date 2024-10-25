@@ -4,27 +4,28 @@ const { DateTime } = require("luxon");
 const fetch = require("node-fetch");
 const client = new Discord.Client({ intents: 34815 });
 
-// TODO: ASF (version, ...)
+// TODO: status CardsFarmer
 
 const re1 = /(addlicense|rp)\sasf\s(?:s\/|)((?:\d+[,\s]*)+)/gi;
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-//Can be Changed/Updated
-//commands with one optional botname argument
 const apiBot = ["pause", "resume", "start", "stop", "addlicense", "redeempoints"];
 const apiASF = ["exit", "restart", "update"];
-const BotVersion = "v2.0.0";
-//Can be Changed/Updated
+const BotVersion = "v2.1.0";
+
+const ASF_ICON = "https://raw.githubusercontent.com/JustArchiNET/ArchiSteamFarm/refs/heads/main/resources/ASF_184x184.png";
 
 const translations = {
   PurchaseResultDetail: {},
-  Result: {}
+  Result: {},
+  Currency: {}
 }
 
 const schemaMapping = {
   "SteamKit2.EPurchaseResultDetail": "PurchaseResultDetail",
   "SteamKit2.EResult": "Result",
+  "SteamKit2.ECurrencyCode": "Currency"
 };
 
 const colorCrit = "#F04747"
@@ -177,6 +178,15 @@ client.on("interactionCreate", async (interaction) => {
     } else {
 
       switch (interaction.commandName) {
+        case "status":
+
+          basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName}`)
+          let botname = interaction.options.getString("botname");
+          response = await responseBodyStat(botname);
+          await interaction.editReply(response);
+
+          break;
+
         case "ping":
           const startTimestamp = Date.now();
           const latency = Date.now() - startTimestamp;
@@ -311,7 +321,7 @@ async function heartbeat() {
     type: Discord.ActivityType.WATCHING,
   });
 
-  await client.user.setStatus('idle')
+  client.user.setStatus('idle')
 
   setInterval(async () => {
     try {
@@ -329,7 +339,7 @@ async function heartbeat() {
           });
           client.user.setStatus("online");
           if (Object.keys(translations.PurchaseResultDetail).length === 0) {
-            fetchAllTranslations().then(() => {
+            fetchTranslations().then(() => {
               basicCLog(`Translations loaded`);
               basicCLog(`[${client.user.username}] Ready!`);
             });
@@ -381,7 +391,7 @@ async function onlineCheck() {
         const updatedActivity = client.user.presence.activities?.[0]?.name;
 
         if (updatedActivity === "ASF | Online") {
-          basicCLog(`Bot is now online.`);
+          basicCLog(`ASF is online.`);
           clearInterval(checkInterval);
           resolve();
         }
@@ -450,7 +460,7 @@ async function fetchBots() {
   }
 }
 
-async function fetchTranslations(schemaName) {
+async function fetchTranslations() {
   try {
     const response = await fetch(
       "https:" + config.secruity.IP + "/swagger/ASF/swagger.json"
@@ -460,36 +470,21 @@ async function fetchTranslations(schemaName) {
 
     const data = await response.json();
 
-    const schema = data.components.schemas[schemaName];
-    if (schema && schema["x-definition"]) {
-      const xDefinition = schema["x-definition"];
+    for (const [schemaName, translationKey] of Object.entries(schemaMapping)) {
+      const schema = data.components.schemas[schemaName];
 
-      const translationKey = schemaMapping[schemaName];
-
-      if (translationKey) {
+      if (schema && schema["x-definition"]) {
+        const xDefinition = schema["x-definition"];
 
         for (const [code, translation] of Object.entries(xDefinition)) {
           translations[translationKey][code] = translation;
         }
       } else {
-        console.error(`No mapping found for schema name "${schemaName}"`);
+        console.error(`Expected structure not found in the JSON response for ${schemaName}`);
       }
-    } else {
-      console.error(`Expected structure not found in the JSON response for ${schemaName}`);
     }
   } catch (error) {
     console.error("Error fetching translations:", error);
-  }
-}
-
-async function fetchAllTranslations() {
-  const schemasToFetch = [
-    "SteamKit2.EPurchaseResultDetail",
-    "SteamKit2.EResult",
-  ];
-
-  for (const schema of schemasToFetch) {
-    await fetchTranslations(schema);
   }
 }
 
@@ -511,6 +506,7 @@ function basicEmbed(description, color) {
     .setColor(color)
     .setAuthor({
       name: "ASF Rcon Commands",
+      iconURL: ASF_ICON
     })
     .setDescription(description)
     .setTimestamp(Date.now())
@@ -529,6 +525,69 @@ function basicCLog(message) {
     });
   } else {
     console.log(`${getTime()} | ` + message);
+  }
+}
+
+async function responseBodyStat(bot) {
+  let link
+
+  if (bot) {
+    link = `https://${config.secruity.IP}/Api/Bot/${bot}`
+  } else {
+    link = `https://${config.secruity.IP}/Api/ASF`
+  }
+
+  try {
+    const res = await fetch(
+      link,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authentication: config.secruity.IPC_PASSWORD,
+        }
+      }
+    );
+
+    const body = await res.json();
+
+    if (body.Success) {
+
+      if (bot) {
+        let embed = new Discord.EmbedBuilder()
+          .setColor(colorBase)
+          .setAuthor({
+            name: `${body.Result[bot].BotName}'s aka "${body.Result[bot].Nickname}" status`,
+            iconURL: `https://avatars.cloudflare.steamstatic.com/${body.Result[bot].AvatarHash}.jpg`,
+            url: `https://steamcommunity.com/profiles/${body.Result[bot].s_SteamID}/`
+          })
+          .setDescription((`**Steam ID:** [${body.Result[bot].s_SteamID}](https://steamid.xyz/${body.Result[bot].s_SteamID})\n**Wallet:** ${body.Result[bot].WalletBalance} ${await getTranslation("Currency", body.Result[bot].WalletCurrency)}`))
+          .setTimestamp(Date.now())
+          .setFooter({
+            text: `ASF-Bot ${BotVersion}`,
+            iconURL: `https://cdn.discordapp.com/avatars/${config.bot.ID}/${client.user.avatar}.webp?size=512`,
+          });
+        return { embeds: [embed] };
+
+      } else {
+        let embed = new Discord.EmbedBuilder()
+          .setColor(colorBase)
+          .setAuthor({
+            name: "ASF status",
+            iconURL: ASF_ICON,
+            url: `https://${config.secruity.IP}/`
+          })
+          .setDescription((`**Version**: ${body.Result.Version}\n**Uptime**: <t:${Math.floor(new Date(body.Result.ProcessStartTime).getTime() / 1000)}:R>\n**Memory Usage**: ${(body.Result.MemoryUsage / 1024).toFixed(2)} MB`))
+          .setTimestamp(Date.now())
+          .setFooter({
+            text: `ASF-Bot ${BotVersion}`,
+            iconURL: `https://cdn.discordapp.com/avatars/${config.bot.ID}/${client.user.avatar}.webp?size=512`,
+          });
+        return { embeds: [embed] };
+      }
+    }
+  } catch (error) {
+    console.error("Status fetch error:", error);
   }
 }
 
@@ -564,22 +623,23 @@ async function responseBodyUp(data) {
       };
     }
   } catch (error) {
-    console.error("Fetch error:", error);
+    console.error("Update fetch error:", error);
   }
 }
 
 async function responseBodyP(data, bot) {
   let response = ""
   let resumeTimeFormat = ""
+  let link
+
+  if (bot) {
+    response = `<${bot}> `
+    link = `https://${config.secruity.IP}/Api/Bot/${bot}/Pause`
+  } else {
+    link = `https://${config.secruity.IP}/Api/Bot/ASF/Pause`
+  }
 
   try {
-    let link
-    if (bot) {
-      response = `<${bot}> `
-      link = `https://${config.secruity.IP}/Api/Bot/${bot}/Pause`
-    } else {
-      link = `https://${config.secruity.IP}/Api/Bot/ASF/Pause`
-    }
     const res = await fetch(
       link,
       {
@@ -596,7 +656,7 @@ async function responseBodyP(data, bot) {
 
     if (data.ResumeInSeconds != 0) {
       let resumeTime = await Math.floor(Date.now() / 1000) + data.ResumeInSeconds
-      resumeTimeFormat = ` Resuming in <t:${resumeTime}:R>`
+      resumeTimeFormat = ` Resuming <t:${resumeTime}:R>`
     }
 
     if (body.Success) {
@@ -614,19 +674,21 @@ async function responseBodyP(data, bot) {
       };
     }
   } catch (error) {
-    console.error("Fetch error:", error);
+    console.error("Pause fetch error:", error);
   }
 }
 
 async function responseBodyAL(data, bot) {
   let response
+  let link
+
+  if (bot) {
+    link = `https://${config.secruity.IP}/Api/Bot/${bot}/AddLicense`
+  } else {
+    link = `https://${config.secruity.IP}/Api/Bot/ASF/AddLicense`
+  }
+
   try {
-    let link
-    if (bot) {
-      link = `https://${config.secruity.IP}/Api/Bot/${bot}/AddLicense`
-    } else {
-      link = `https://${config.secruity.IP}/Api/Bot/ASF/AddLicense`
-    }
     const res = await fetch(
       link,
       {
@@ -645,7 +707,7 @@ async function responseBodyAL(data, bot) {
       response = body.Result
     }
   } catch (error) {
-    console.error("Fetch error:", error);
+    console.error("Addlicence fetch error:", error);
   }
 
   let output = "";
@@ -673,14 +735,15 @@ async function responseBodyAL(data, bot) {
 
 async function responseBodyRP(IDs, bot) {
   let results = [];
+  let link
+
+  if (bot) {
+    link = `https://${config.secruity.IP}/Api/Bot/${bot}/RedeemPoints/`
+  } else {
+    link = `https://${config.secruity.IP}/Api/Bot/ASF/RedeemPoints/`
+  }
 
   try {
-    let link
-    if (bot) {
-      link = `https://${config.secruity.IP}/Api/Bot/${bot}/RedeemPoints/`
-    } else {
-      link = `https://${config.secruity.IP}/Api/Bot/ASF/RedeemPoints/`
-    }
     for (const id of IDs) {
       try {
         const res = await fetch(
@@ -694,10 +757,6 @@ async function responseBodyRP(IDs, bot) {
           }
         );
 
-        if (!res.ok) {
-          throw new Error(`Error fetching ID ${id}: ${res.statusText}`);
-        }
-
         const body = await res.json();
 
         if (body && body.Result) {
@@ -706,12 +765,10 @@ async function responseBodyRP(IDs, bot) {
             message: body.Message,
             result: body.Result,
           });
-        } else {
-          throw new Error(`Invalid response for ID ${id}`);
         }
 
       } catch (error) {
-        console.error(`Error with ID ${id}:`, error);
+        console.error(`Redeem Points error with ID ${id}:`, error);
         results.push({
           id,
           message: `Error: ${error.message}`,
@@ -723,7 +780,6 @@ async function responseBodyRP(IDs, bot) {
     let output = "";
     let botGroups = {};
 
-    // Organize the results into bot groups
     for (const { id, message, result } of results) {
       if (result) {
         for (const [botName, statusDetail] of Object.entries(result)) {
@@ -739,7 +795,6 @@ async function responseBodyRP(IDs, bot) {
       }
     }
 
-    // Build the output message
     for (const [botName, entries] of Object.entries(botGroups)) {
       entries.forEach(({ id, status, statusDetail }) => {
         output += `<${botName}> ID: ${id} | Status: ${status} | Status Detail: ${statusDetail}\n`;
@@ -750,8 +805,7 @@ async function responseBodyRP(IDs, bot) {
     return output.trim();
 
   } catch (error) {
-    console.error("General fetch error:", error);
-    return "An error occurred while processing the requests.";
+    console.error("Redeem Points fetch error:", error);
   }
 }
 
