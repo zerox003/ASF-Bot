@@ -10,7 +10,7 @@
         "IPC_PASSWORD" : "Here you put your ASF IPC password"
     },
     "input" : {
-        "CHANNEL_ID": "FreeStuff Bot channel ID"
+        "CHANNEL_ID": "Relay bot channel ID (relayed from SteamDB Discord server <#845984309638463488>)"
     },
     "TZ" : "Europe/Berlin"
 }
