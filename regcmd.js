@@ -11,7 +11,7 @@ async function fetchBots() {
             method: "get",
             headers: {
                 "Content-Type": "application/json",
-                Authentication: config.secruity.IPC_PASSWORD,
+                Authentication: config.security.IPC_PASSWORD,
             },
         });
         const body = await response.json();
@@ -188,7 +188,7 @@ async function registerCommands() {
         await rest.put(
             Routes.applicationGuildCommands(
                 config.bot.ID,
-                config.secruity.SERVER_ID
+                config.security.SERVER_ID
             ),
             { body: [] }
         );
@@ -197,7 +197,7 @@ async function registerCommands() {
         await rest.put(
             Routes.applicationGuildCommands(
                 config.bot.ID,
-                config.secruity.SERVER_ID
+                config.security.SERVER_ID
             ),
             { body: commands }
         );
