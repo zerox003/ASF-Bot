@@ -244,7 +244,7 @@ async function sendIPC(cmd, bot) {
     if (apiBot.includes(cmd)) {
       if (!bot) {
         response = await fetch(
-          `https://${config.security.IP}/Api/Bot/ASF/${cmd.charAt(0).toUpperCase()+cmd.slice(1)}`,
+          `https://${config.security.IP}/Api/Bot/ASF/${cmd.charAt(0).toUpperCase() + cmd.slice(1)}`,
           {
             method: "post",
             headers: {
@@ -255,7 +255,7 @@ async function sendIPC(cmd, bot) {
         )
       } else {
         response = await fetch(
-          `https://${config.security.IP}/Api/Bot/${bot}/${cmd.charAt(0).toUpperCase()+cmd.slice(1)}`,
+          `https://${config.security.IP}/Api/Bot/${bot}/${cmd.charAt(0).toUpperCase() + cmd.slice(1)}`,
           {
             method: "post",
             headers: {
@@ -267,7 +267,7 @@ async function sendIPC(cmd, bot) {
       }
     } else if (apiASF.includes(cmd)) {
       response = await fetch(
-        `https://${config.security.IP}/Api/ASF/${cmd.charAt(0).toUpperCase()+cmd.slice(1)}`,
+        `https://${config.security.IP}/Api/ASF/${cmd.charAt(0).toUpperCase() + cmd.slice(1)}`,
         {
           method: "post",
           headers: {
@@ -570,6 +570,13 @@ async function responseBodyStat(bot) {
         return { embeds: [embed] };
 
       } else {
+
+        let uptimeMillis = Date.now() - new Date(body.Result.ProcessStartTime).getTime();
+
+        let days = Math.floor(uptimeMillis / (1000 * 60 * 60 * 24));
+        let hours = Math.floor((uptimeMillis % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((uptimeMillis % (1000 * 60 * 60)) / (1000 * 60));
+
         let embed = new Discord.EmbedBuilder()
           .setColor(colorBase)
           .setAuthor({
@@ -577,7 +584,7 @@ async function responseBodyStat(bot) {
             iconURL: ASF_ICON,
             url: `https://${config.security.IP}/`
           })
-          .setDescription((`**Version**: ${body.Result.Version}\n**Uptime**: <t:${Math.floor(new Date(body.Result.ProcessStartTime).getTime() / 1000)}:R>\n**Memory Usage**: ${(body.Result.MemoryUsage / 1024).toFixed(2)} MB`))
+          .setDescription((`**Version**: ${body.Result.Version}\n**Uptime**: ${days}d:${hours}h:${minutes}m (<t:${Math.floor(new Date(body.Result.ProcessStartTime).getTime() / 1000)}:R>)\n**Memory Usage**: ${(body.Result.MemoryUsage / 1024).toFixed(2)} MB`))
           .setTimestamp(Date.now())
           .setFooter({
             text: `ASF-Bot ${BotVersion}`,
