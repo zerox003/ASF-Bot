@@ -781,7 +781,7 @@ async function responseBodyAL(data, bot) {
     if (body.Success) {
       response = body.Result
     };
-  } 
+  }
   
   catch (error) {
     console.error("Addlicence fetch error:", error);
@@ -882,7 +882,6 @@ async function responseBodyRP(IDs, bot) {
     };
 
     return output.trim();
-
   } 
   
   catch (error) {
