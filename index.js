@@ -17,13 +17,15 @@ const ASF_ICON = "https://raw.githubusercontent.com/JustArchiNET/ArchiSteamFarm/
 const translations = {
   PurchaseResultDetail: {},
   Result: {},
-  Currency: {}
+  Currency: {},
+  HealthStatus: {}
 }
 
 const schemaMapping = {
   "SteamKit2.EPurchaseResultDetail": "PurchaseResultDetail",
   "SteamKit2.EResult": "Result",
-  "SteamKit2.ECurrencyCode": "Currency"
+  "SteamKit2.ECurrencyCode": "Currency",
+  "Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus": "HealthStatus"
 };
 
 const rpcStat = {
@@ -355,57 +357,65 @@ async function heartbeat() {
 
   setInterval(async () => {
     try {
-      let response = await fetch(
+      let responseHb = await fetch(
         `https://${config.security.IP}/HealthCheck`,
         {
           method: "get",
         }
       );
 
-      if (response.status == 200 && client.user.presence.activities[0].name != rpcStat.online) {
-        basicCLog(`ASF is online`);
-        client.user.setActivity(rpcStat.online, {
-          type: Discord.ActivityType.WATCHING,
-        });
-        client.user.setStatus("online");
-
-        if (Object.keys(translations.PurchaseResultDetail).length === 0) {
-          fetchTranslations().then(() => {
-            basicCLog(`Translations loaded`);
-            basicCLog(`[${client.user.username}] Ready!`);
+      if (responseHb.status == 200) {
+        if (client.user.presence.activities[0].name != rpcStat.online) {
+          basicCLog(`ASF is online`);
+          client.user.setActivity(rpcStat.online, {
+            type: Discord.ActivityType.WATCHING,
           });
-        };
+          client.user.setStatus("online");
+
+          if (Object.keys(translations.PurchaseResultDetail).length === 0) {
+            fetchTranslations().then(() => {
+              basicCLog(`Translations loaded`);
+              basicCLog(`[${client.user.username}] Ready!`);
+            });
+          };
+        }
       }
 
-      else if (response.status == 502 && client.user.presence.activities[0].name != rpcStat.booting) {
-        basicCLog(`ASF is starting`);
-        client.user.setActivity(rpcStat.booting, {
-          type: Discord.ActivityType.WATCHING,
-        });
-        client.user.setStatus("idle");
+      else if (responseHb.status == 502) {
+        if (client.user.presence.activities[0].name != rpcStat.booting) {
+          basicCLog(`ASF is starting`);
+          client.user.setActivity(rpcStat.booting, {
+            type: Discord.ActivityType.WATCHING,
+          });
+          client.user.setStatus("idle");
+        }
       }
 
-      else if (response){
-        basicCLog(response);
+      else if (responseHb) {
+        console.log(responseHb);
       };
     }
 
     catch (error) {
 
-      if (error.code == "ETIMEDOUT" && client.user.presence.activities[0].name != rpcStat.offline) {
-        basicCLog(`ASF is offline`);
-        client.user.setActivity(rpcStat.offline, {
-          type: Discord.ActivityType.WATCHING,
-        });
-        client.user.setStatus("dnd");
+      if (error.code == "ETIMEDOUT") {
+        if (client.user.presence.activities[0].name != rpcStat.offline) {
+          basicCLog(`ASF is offline`);
+          client.user.setActivity(rpcStat.offline, {
+            type: Discord.ActivityType.WATCHING,
+          });
+          client.user.setStatus("dnd");
+        }
       }
 
-      else if (error.code == "ECONNREFUSED" && client.user.presence.activities[0].name != rpcStat.booting) {
-        basicCLog(`ASF is starting`);
-        client.user.setActivity(rpcStat.booting, {
-          type: Discord.ActivityType.WATCHING,
-        });
-        client.user.setStatus("idle");
+      else if (error.code == "ECONNREFUSED") {
+        if (client.user.presence.activities[0].name != rpcStat.booting) {
+          basicCLog(`ASF is starting`);
+          client.user.setActivity(rpcStat.booting, {
+            type: Discord.ActivityType.WATCHING,
+          });
+          client.user.setStatus("idle");
+        }
       }
 
       else {
@@ -522,14 +532,14 @@ async function fetchTranslations() {
         for (const [code, translation] of Object.entries(xDefinition)) {
           translations[translationKey][code] = translation;
         };
-      } 
-      
+      }
+
       else {
         console.error(`Expected structure not found in the JSON response for ${schemaName}`);
       }
     };
   }
-  
+
   catch (error) {
     console.error("Error fetching translations:", error);
   };
@@ -544,8 +554,8 @@ async function getTranslation(schema, code) {
     }
 
     return Object.keys(translations[schema]).find(key => translations[schema][key] === code) || "Translation not found";
-  } 
-  
+  }
+
   else {
     console.error(`Schema "${schema}" not found.`);
     return "Schema not found";
@@ -575,8 +585,8 @@ function basicCLog(message) {
     lines.forEach(line => {
       console.log(`${getTime()} | ` + line);
     });
-  } 
-  
+  }
+
   else {
     console.log(`${getTime()} | ` + message);
   };
@@ -622,8 +632,8 @@ async function responseBodyStat(bot) {
             iconURL: `https://cdn.discordapp.com/avatars/${config.bot.ID}/${client.user.avatar}.webp?size=512`,
           });
         return { embeds: [embed] };
-      } 
-      
+      }
+
       else {
 
         let uptimeMillis = Date.now() - new Date(body.Result.ProcessStartTime).getTime();
@@ -648,8 +658,8 @@ async function responseBodyStat(bot) {
         return { embeds: [embed] };
       };
     };
-  } 
-  
+  }
+
   catch (error) {
     console.error("Status fetch error:", error);
   };
@@ -680,8 +690,8 @@ async function responseBodyUp(data) {
         message: response,
         color: colorBase
       };
-    } 
-    
+    }
+
     else if (!body.Success) {
       response = body.Message
 
@@ -690,8 +700,8 @@ async function responseBodyUp(data) {
         color: colorWarn
       };
     };
-  } 
-  
+  }
+
   catch (error) {
     console.error("Update fetch error:", error);
   };
@@ -736,18 +746,18 @@ async function responseBodyP(data, bot) {
         message: response,
         color: colorBase
       };
-    } 
-    
+    }
+
     else if (!body.Success) {
       response = response + body.Message
-      
+
       return {
         message: response,
         color: colorWarn
       };
     };
-  } 
-  
+  }
+
   catch (error) {
     console.error("Pause fetch error:", error);
   };
@@ -782,7 +792,7 @@ async function responseBodyAL(data, bot) {
       response = body.Result
     };
   }
-  
+
   catch (error) {
     console.error("Addlicence fetch error:", error);
   }
@@ -843,8 +853,8 @@ async function responseBodyRP(IDs, bot) {
             result: body.Result,
           });
         };
-      } 
-      
+      }
+
       catch (error) {
         console.error(`Redeem Points error with ID ${id}:`, error);
         results.push({
@@ -882,8 +892,8 @@ async function responseBodyRP(IDs, bot) {
     };
 
     return output.trim();
-  } 
-  
+  }
+
   catch (error) {
     console.error("Redeem Points fetch error:", error);
   };
