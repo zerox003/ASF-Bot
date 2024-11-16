@@ -385,7 +385,7 @@ async function heartbeat() {
         client.user.setStatus("idle");
       }
 
-      else {
+      else if (response){
         basicCLog(response);
       };
     }
