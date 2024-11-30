@@ -266,7 +266,7 @@ async function sendIPC(cmd, bot) {
 
       if (!bot) {
         response = await fetch(
-          `https://${config.security.IP}/Api/Bot/ASF/${cmd.charAt(0).toUpperCase() + cmd.slice(1)}`,
+          `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/ASF/${cmd.charAt(0).toUpperCase() + cmd.slice(1)}`,
           {
             method: "post",
             headers: {
@@ -279,7 +279,7 @@ async function sendIPC(cmd, bot) {
 
       else {
         response = await fetch(
-          `https://${config.security.IP}/Api/Bot/${bot}/${cmd.charAt(0).toUpperCase() + cmd.slice(1)}`,
+          `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/${bot}/${cmd.charAt(0).toUpperCase() + cmd.slice(1)}`,
           {
             method: "post",
             headers: {
@@ -293,7 +293,7 @@ async function sendIPC(cmd, bot) {
 
     else if (apiASF.includes(cmd)) {
       response = await fetch(
-        `https://${config.security.IP}/Api/ASF/${cmd.charAt(0).toUpperCase() + cmd.slice(1)}`,
+        `${config.security.SSL_STAT}://${config.security.IP}/Api/ASF/${cmd.charAt(0).toUpperCase() + cmd.slice(1)}`,
         {
           method: "post",
           headers: {
@@ -358,7 +358,7 @@ async function heartbeat() {
   setInterval(async () => {
     try {
       let responseHb = await fetch(
-        `https://${config.security.IP}/HealthCheck`,
+        `${config.security.SSL_STAT}://${config.security.IP}/HealthCheck`,
         {
           method: "get",
         }
@@ -489,7 +489,7 @@ async function fetchBots() {
   try {
 
     const response = await fetch(
-      `https://${config.security.IP}/Api/Bot/ASF`,
+      `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/ASF`,
       {
         method: "get",
         headers: {
@@ -516,7 +516,7 @@ async function fetchTranslations() {
   try {
 
     const response = await fetch(
-      `https:${config.security.IP}/swagger/ASF/swagger.json`
+      `${config.security.SSL_STAT}:${config.security.IP}/swagger/ASF/swagger.json`
     );
 
     if (!response.ok) throw new Error("Network response was not ok");
@@ -596,9 +596,9 @@ async function responseBodyStat(bot) {
   let link
 
   if (bot) {
-    link = `https://${config.security.IP}/Api/Bot/${bot}`
+    link = `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/${bot}`
   } else {
-    link = `https://${config.security.IP}/Api/ASF`
+    link = `${config.security.SSL_STAT}://${config.security.IP}/Api/ASF`
   };
 
   try {
@@ -647,7 +647,7 @@ async function responseBodyStat(bot) {
           .setAuthor({
             name: "ASF status",
             iconURL: ASF_ICON,
-            url: `https://${config.security.IP}/`
+            url: `${config.security.SSL_STAT}://${config.security.IP}/`
           })
           .setDescription((`**Version**: ${body.Result.Version}\n**Uptime**: ${days}d:${hours}h:${minutes}m (<t:${Math.floor(new Date(body.Result.ProcessStartTime).getTime() / 1000)}:R>)\n**Memory Usage**: ${(body.Result.MemoryUsage / 1024).toFixed(2)} MB`))
           .setTimestamp(Date.now())
@@ -670,7 +670,7 @@ async function responseBodyUp(data) {
 
   try {
     const res = await fetch(
-      `https://${config.security.IP}/Api/ASF/Update`,
+      `${config.security.SSL_STAT}://${config.security.IP}/Api/ASF/Update`,
       {
         method: "POST",
         body: JSON.stringify(data),
@@ -714,9 +714,9 @@ async function responseBodyP(data, bot) {
 
   if (bot) {
     response = `<${bot}> `
-    link = `https://${config.security.IP}/Api/Bot/${bot}/Pause`
+    link = `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/${bot}/Pause`
   } else {
-    link = `https://${config.security.IP}/Api/Bot/ASF/Pause`
+    link = `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/ASF/Pause`
   };
 
   try {
@@ -768,9 +768,9 @@ async function responseBodyAL(data, bot) {
   let link
 
   if (bot) {
-    link = `https://${config.security.IP}/Api/Bot/${bot}/AddLicense`
+    link = `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/${bot}/AddLicense`
   } else {
-    link = `https://${config.security.IP}/Api/Bot/ASF/AddLicense`
+    link = `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/ASF/AddLicense`
   }
 
   try {
@@ -825,9 +825,9 @@ async function responseBodyRP(IDs, bot) {
   let link
 
   if (bot) {
-    link = `https://${config.security.IP}/Api/Bot/${bot}/RedeemPoints/`
+    link = `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/${bot}/RedeemPoints/`
   } else {
-    link = `https://${config.security.IP}/Api/Bot/ASF/RedeemPoints/`
+    link = `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/ASF/RedeemPoints/`
   };
 
   try {

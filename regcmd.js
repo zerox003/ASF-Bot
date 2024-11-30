@@ -7,7 +7,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 async function fetchBots() {
     try {
         await waitForASFOnline();
-        const response = await fetch(`https://${config.security.IP}/Api/Bot/ASF`, {
+        const response = await fetch(`${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/ASF`, {
             method: "get",
             headers: {
                 "Content-Type": "application/json",
@@ -29,7 +29,7 @@ async function waitForASFOnline() {
     return new Promise(async (resolve, reject) => {
         const checkInterval = setInterval(async () => {
             try {
-                const response = await fetch(`https://${config.security.IP}/HealthCheck`, { method: "get" });
+                const response = await fetch(`${config.security.SSL_STAT}://${config.security.IP}/HealthCheck`, { method: "get" });
 
                 if (response.status === 200) {
                     clearInterval(checkInterval);

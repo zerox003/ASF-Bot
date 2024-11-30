@@ -4,7 +4,7 @@
 
 #### (and automatically redeem free game promotions and steam points)
 
-Control your ASF instance by discord.
+Control your ASF instance from within discord.
 
 ASF support server:<br>
 [![Discord](https://img.shields.io/discord/267292556709068800.svg?label=Discord&logo=discord&cacheSeconds=3600)](https://discord.gg/hSQgt8j)<br>
@@ -24,14 +24,15 @@ You need to join the SteamDB server and set the follow of [#free-promotions](htt
     },
     "security" : {
         "USER_ID": "Your own user id",
-        "SERVER_ID": "Your own server id",
+        "SERVER_ID": "Your own guild id",
         "IP" : "Here you put your ASF panel IP:PORT",
-        "IPC_PASSWORD" : "Here you put your ASF IPC password"
+        "IPC_PASSWORD" : "Here you put your ASF IPC password",
+        "SSL_STAT": "http or https"
     },
     "input" : {
-        "CHANNEL_ID": "channel ID for auto-redeem/add"
+        "CHANNEL_ID": "Relay bot channel ID (relayed from SteamDB Discord server <#845984309638463488>)"
     },
-    "TZ" : "Put your Timezone here (luxon)"
+    "TZ" : "Put your Timezone here (luxon) eg. Europe/Berlin"
 }
 ```
 
