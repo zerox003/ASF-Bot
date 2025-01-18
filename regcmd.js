@@ -35,13 +35,13 @@ async function waitForASFOnline() {
                     clearInterval(checkInterval);
                     resolve();
                 } else if (response.status === 502) {
-                    console.log(`ASF is booting...`);
+                    console.log(`No running Service`);
                 } else {
                     console.log(`Unexpected status: ${response.status}`);
                 }
             } catch (error) {
                 if (error.code === "ETIMEDOUT" || error.code === "ECONNREFUSED") {
-                    console.log(`ASF is offline or booting.`);
+                    console.log(`Server is offline or Service is booting`);
                 } else {
                     console.error("Fetch error:", error);
                     clearInterval(checkInterval);
