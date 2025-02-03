@@ -8,7 +8,7 @@ const client = new Discord.Client({ intents: 34815 });
 
 const re1 = /(addlicense|redeempoints)\sasf\s(?:s\/|)((?:\d+[,\s]*)+)/gi;
 
-const apiBot = ["pause", "resume", "start", "stop", "addlicense", "redeempoints"];
+const apiBot = ["rename", "pause", "resume", "start", "stop", "addlicense", "redeempoints"];
 const apiASF = ["exit", "restart", "update"];
 const BotVersion = "v2.1.1";
 
@@ -66,163 +66,157 @@ client.on("interactionCreate", async (interaction) => {
 
         if (!botname) {
           basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName}`);
-
-          if (interaction.commandName === "pause") {
-            body = {
-              "Permanent": true,
-              "ResumeInSeconds": 0
-            };
-
-            if ((time = Math.abs(interaction.options.getInteger("time"))) != 0) {
-              body.Permanent = false;
-              body.ResumeInSeconds = time;
+        
+          switch (interaction.commandName) {
+            case "pause":
+              body = {
+                "Permanent": true,
+                "ResumeInSeconds": 0
+              };
+        
+              if ((time = Math.abs(interaction.options.getInteger("time"))) != 0) {
+                body.Permanent = false;
+                body.ResumeInSeconds = time;
+              }
+        
               response = await responseBodyP(body);
               basicCLog(response.message);
               return await interaction.editReply(basicEmbed(response.message, response.color));
-            }
-
-            else {
-              response = await responseBodyP(body);
+        
+            case "addlicense":
+              body = {
+                Apps: interaction.options.getString("license_ids").split(/[,\s]+/),
+                Packages: interaction.options.getString("license_ids").split(/[,\s]+/),
+              };
+        
+              response = await responseBodyAL(body);
+              basicCLog(response);
+              return await interaction.editReply(basicEmbed(response, colorBase));
+        
+            case "redeempoints":
+              IDs = interaction.options.getString("item_ids").split(/[,\s]+/);
+        
+              response = await responseBodyRP(IDs);
+              basicCLog(response);
+              return await interaction.editReply(basicEmbed(response, colorBase));
+        
+            default:
+              response = await sendIPC(interaction.commandName);
               basicCLog(response.message);
               return await interaction.editReply(basicEmbed(response.message, response.color));
-            };
           }
-
-          else if (interaction.commandName === "addlicense") {
-
-            body = {
-              Apps: interaction.options.getString("license_ids").split(/[,\s]+/),
-              Packages: interaction.options.getString("license_ids").split(/[,\s]+/),
-            };
-
-            response = await responseBodyAL(body)
-            basicCLog(response);
-            return await interaction.editReply(basicEmbed(response, colorBase));
-          }
-
-          else if (interaction.commandName === "redeempoints") {
-            IDs = interaction.options.getString("item_ids").split(/[,\s]+/);
-            response = await responseBodyRP(IDs);
-            basicCLog(response);
-            return await interaction.editReply(basicEmbed(response, colorBase));
-          }
-
-          else {
-            response = await sendIPC(interaction.commandName);
-            basicCLog(response.message);
-            return await interaction.editReply(basicEmbed(response.message, response.color));
-          };
         }
 
         else if (bots.includes(botname)) {
           basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName} for <${botname}>`)
 
-          if (interaction.commandName === "pause") {
-            body = {
-              "Permanent": true,
-              "ResumeInSeconds": 0
-            }
+          switch (interaction.commandName) {
+            case "rename":
+              body = {
+                "NewName": interaction.options.getString("newname"),
+              };
 
-            if ((time = Math.abs(interaction.options.getInteger("time"))) != 0) {
-              body.Permanent = false;
-              body.ResumeInSeconds = time;
+              response = await responseBodyRen(body, botname);
+ 
+              basicCLog(response.message);
+              return await interaction.editReply(basicEmbed(response.message, response.color));
+
+            case "pause":
+              body = {
+                "Permanent": true,
+                "ResumeInSeconds": 0
+              };
+          
+              if ((time = Math.abs(interaction.options.getInteger("time"))) != 0) {
+                body.Permanent = false;
+                body.ResumeInSeconds = time;
+              }
+          
               response = await responseBodyP(body, botname);
               basicCLog(response.message);
               return await interaction.editReply(basicEmbed(response.message, response.color));
-            }
-
-            else {
-              response = await responseBodyP(body, botname);
+          
+            case "addlicense":
+              body = {
+                Apps: interaction.options.getString("license_ids").split(/[,\s]+/),
+                Packages: interaction.options.getString("license_ids").split(/[,\s]+/),
+              };
+          
+              response = await responseBodyAL(body, botname);
+              basicCLog(response);
+              return await interaction.editReply(basicEmbed(response, colorBase));
+          
+            case "redeempoints":
+              IDs = interaction.options.getString("item_ids").split(/[,\s]+/);
+          
+              response = await responseBodyRP(IDs, botname);
+              basicCLog(response);
+              return await interaction.editReply(basicEmbed(response, colorBase));
+          
+            default:
+              response = await sendIPC(interaction.commandName, botname);
               basicCLog(response.message);
               return await interaction.editReply(basicEmbed(response.message, response.color));
-            };
           }
-
-          else if (interaction.commandName === "addlicense") {
-
-            body = {
-              Apps: interaction.options.getString("license_ids").split(/[,\s]+/),
-              Packages: interaction.options.getString("license_ids").split(/[,\s]+/),
-            };
-
-            response = await responseBodyAL(body, botname)
-            basicCLog(response);
-            return await interaction.editReply(basicEmbed(response, colorBase));
-          }
-
-          else if (interaction.commandName === "redeempoints") {
-
-            IDs = interaction.options.getString("item_ids").split(/[,\s]+/);
-
-            response = await responseBodyRP(IDs, botname);
-            basicCLog(response);
-            return await interaction.editReply(basicEmbed(response, colorBase));
-          }
-
-          else {
-            response = await sendIPC(interaction.commandName, botname);
-            basicCLog(response.message);
-            return await interaction.editReply(basicEmbed(response.message, response.color));
-          };
         };
       }
-
-      else {
-        basicCLog("Add Bots in ASF first!");
-        return interaction.editReply(basicEmbed("Add Bots in ASF first!", colorCrit));
-      };
-    }
-
-    else if (apiASF.includes(interaction.commandName)) {
-
-      basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName}`)
-
-      if (interaction.commandName === "update") {
-        body = {
-          "Channel": null,
-          "Forced": false
-        };
-
-        response = await responseBodyUp(body)
-        basicCLog(response.message)
-        return await interaction.editReply(basicEmbed(response.message, response.color))
-      }
-
-      else {
-        response = await sendIPC(interaction.commandName);
-        basicCLog(response.message);
-        return await interaction.editReply(basicEmbed(response.message, response.color));
-      };
-    }
 
     else {
-
-      switch (interaction.commandName) {
-
-        case "status":
-          basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName}`)
-          let botname = interaction.options.getString("botname");
-          response = await responseBodyStat(botname);
-          await interaction.editReply(response);
-          break;
-
-        case "ping":
-          const startTimestamp = Date.now();
-          const latency = Date.now() - startTimestamp;
-          await interaction.editReply(basicEmbed(`Pong! The bots latency is ${latency}ms.`, colorBase));
-          break;
-
-        case "botversion":
-          await interaction.editReply(basicEmbed(BotVersion, colorBase));
-          break;
-      };
+      basicCLog("Add Bots in ASF first!");
+      return interaction.editReply(basicEmbed("Add Bots in ASF first!", colorCrit));
     };
   }
 
-  catch (error) {
-    console.error('Error handling command:', error);
-    return await interaction.editReply(basicEmbed("An error occurred while processing your command", colorCrit));
+    else if (apiASF.includes(interaction.commandName)) {
+
+    basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName}`)
+
+    if (interaction.commandName === "update") {
+      body = {
+        "Channel": null,
+        "Forced": false
+      };
+
+      response = await responseBodyUp(body)
+      basicCLog(response.message)
+      return await interaction.editReply(basicEmbed(response.message, response.color))
+    }
+
+    else {
+      response = await sendIPC(interaction.commandName);
+      basicCLog(response.message);
+      return await interaction.editReply(basicEmbed(response.message, response.color));
+    };
+  }
+
+  else {
+
+    switch (interaction.commandName) {
+
+      case "status":
+        basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName}`)
+        let botname = interaction.options.getString("botname");
+        response = await responseBodyStat(botname);
+        await interaction.editReply(response);
+        break;
+
+      case "ping":
+        const startTimestamp = Date.now();
+        const latency = Date.now() - startTimestamp;
+        await interaction.editReply(basicEmbed(`Pong! The bots latency is ${latency}ms.`, colorBase));
+        break;
+
+      case "botversion":
+        await interaction.editReply(basicEmbed(BotVersion, colorBase));
+        break;
+    };
   };
+}
+
+  catch (error) {
+  console.error('Error handling command:', error);
+  return await interaction.editReply(basicEmbed("An error occurred while processing your command", colorCrit));
+};
 });
 
 client.on("messageCreate", async (message) => {
@@ -592,6 +586,46 @@ function basicCLog(message) {
     console.log(`${getTime()} | ` + message);
   };
 };
+
+async function responseBodyRen(data, bot) {
+let response
+try {
+  const res = await fetch(
+    `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/${bot}/Rename`,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+        Authentication: config.security.IPC_PASSWORD,
+      }
+    }
+  );
+  const body = await res.json();
+
+  if (body.Success) {
+    response = body.Message + `\n **! manual discord bot restart required !**`
+
+    return {
+      message: response,
+      color: colorBase
+    };
+  }
+
+  else if (!body.Success) {
+    response = body.Message
+
+    return {
+      message: response,
+      color: colorWarn
+    };
+  };
+}
+
+catch (error) {
+  console.error("Rename fetch error:", error);
+};
+}
 
 async function responseBodyStat(bot) {
   let link

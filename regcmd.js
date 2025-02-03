@@ -92,6 +92,29 @@ async function registerCommands() {
         ]
     }));
 
+    const rename = {
+        "name": "rename",
+        "description": "Renames given bot along with all its related files (ASF only)",
+        "options": [
+            {
+                "name": "botname",
+                "description": "The bot to rename",
+                "type": 3,
+                "required": true,
+                "choices": botNames.map(bot => ({
+                    name: bot,
+                    value: bot
+                }))
+            },
+            {
+                "name": "newname",
+                "description": "New botname. Can't be ASF, neither the one used by any existing bot",
+                "type": 3,
+                "required": true
+            }
+        ]
+    }
+
     const status = {
         "name": "status",
         "description": `Get status for ASF or bot`,
@@ -178,7 +201,7 @@ async function registerCommands() {
         ]
     };
 
-    const commands = [...staticCommands, ...basic, pause, addLicense, redeemPoints, status];
+    const commands = [...staticCommands, ...basic, rename, pause, addLicense, redeemPoints, status];
 
     const rest = new REST({ version: '10' }).setToken(config.bot.token);
 
