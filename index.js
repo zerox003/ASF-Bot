@@ -15,18 +15,11 @@ const BotVersion = "v2.1.1";
 const ASF_ICON = "https://raw.githubusercontent.com/JustArchiNET/ArchiSteamFarm/refs/heads/main/resources/ASF_184x184.png";
 
 const translations = {
-  PurchaseResultDetail: {},
-  Result: {},
-  Currency: {},
+  EPurchaseResultDetail: {},
+  EResult: {},
+  ECurrencyCode: {},
   HealthStatus: {}
 }
-
-const schemaMapping = {
-  "SteamKit2.EPurchaseResultDetail": "PurchaseResultDetail",
-  "SteamKit2.EResult": "Result",
-  "SteamKit2.ECurrencyCode": "Currency",
-  "Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus": "HealthStatus"
-};
 
 const rpcStat = {
   pinging: "ASF | pinging...",
@@ -366,7 +359,7 @@ async function heartbeat() {
           });
           client.user.setStatus("online");
 
-          if (Object.keys(translations.PurchaseResultDetail).length === 0) {
+          if (Object.keys(translations.EPurchaseResultDetail).length === 0) {
             fetchTranslations().then(() => {
               basicCLog(`Translations loaded`);
               basicCLog(`[${client.user.username}] Ready!`);
@@ -506,9 +499,10 @@ async function fetchBots() {
   };
 };
 
-//TODO: rework to new strucutal changes (waiting for crutial error to be fixed (https://github.com/JustArchiNET/ArchiSteamFarm/issues/3376))
 async function fetchTranslations() {
   try {
+
+    const translationKeys = Object.keys(translations);
 
     const response = await fetch(
       `${config.security.SSL_STAT}:${config.security.IP}/swagger/ASF/swagger.json`
@@ -518,19 +512,19 @@ async function fetchTranslations() {
 
     const data = await response.json();
 
-    for (const [schemaName, translationKey] of Object.entries(schemaMapping)) {
-      const schema = data.components.schemas[schemaName];
+    for (const key of translationKeys) {
+      const schema = data.components.schemas[key];
 
       if (schema && schema["x-definition"]) {
         const xDefinition = schema["x-definition"];
 
         for (const [code, translation] of Object.entries(xDefinition)) {
-          translations[translationKey][code] = translation;
+          translations[key][code] = translation;
         };
       }
 
       else {
-        console.error(`Expected structure not found in the JSON response for ${schemaName}`);
+        console.error(`Expected structure not found in the JSON response for ${key}`);
       }
     };
   }
@@ -660,7 +654,7 @@ async function responseBodyStat(bot) {
             iconURL: `https://avatars.cloudflare.steamstatic.com/${body.Result[bot].AvatarHash}.jpg`,
             url: `https://steamcommunity.com/profiles/${body.Result[bot].s_SteamID}/`
           })
-          .setDescription((`**Steam ID:** [${body.Result[bot].s_SteamID}](https://steamid.xyz/${body.Result[bot].s_SteamID})\n**Wallet:** ${body.Result[bot].WalletBalance} ${await getTranslation("Currency", body.Result[bot].WalletCurrency)}`))
+          .setDescription((`**Steam ID:** [${body.Result[bot].s_SteamID}](https://steamid.xyz/${body.Result[bot].s_SteamID})\n**Wallet:** ${body.Result[bot].WalletBalance} ${await getTranslation("ECurrencyCode", body.Result[bot].WalletCurrency)}`))
           .setTimestamp(Date.now())
           .setFooter({
             text: `ASF-Bot ${BotVersion}`,
@@ -842,9 +836,9 @@ async function responseBodyAL(data, bot) {
       let appDetail = apps[id];
       let packageDetail = packages[id];
 
-      output += `<${botName}> Apps ID: ${id} | Status: ${await getTranslation("Result", appDetail.Result)} | Status Detail: ${await getTranslation("PurchaseResultDetail", appDetail.PurchaseResultDetail)}\n`;
+      output += `<${botName}> Apps ID: ${id} | Status: ${await getTranslation("EResult", appDetail.Result)} | Status Detail: ${await getTranslation("EPurchaseResultDetail", appDetail.PurchaseResultDetail)}\n`;
 
-      output += `<${botName}> Packages ID: ${id} | Status: ${await getTranslation("Result", packageDetail.Result)} | Status Detail: ${await getTranslation("PurchaseResultDetail", packageDetail.PurchaseResultDetail)}\n`;
+      output += `<${botName}> Packages ID: ${id} | Status: ${await getTranslation("EResult", packageDetail.Result)} | Status Detail: ${await getTranslation("EPurchaseResultDetail", packageDetail.PurchaseResultDetail)}\n`;
 
       output += "\n";
     };
@@ -913,7 +907,7 @@ async function responseBodyRP(IDs, bot) {
           botGroups[botName].push({
             id,
             status: message,
-            statusDetail: await getTranslation("Result", statusDetail),
+            statusDetail: await getTranslation("EResult", statusDetail),
           });
         };
       };
