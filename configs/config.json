@@ -3,14 +3,15 @@
         "token" : "Bot token",
         "ID" : "Bot ID"
     },
-    "secruity" : {
+    "security" : {
         "USER_ID": "Your own user id",
         "SERVER_ID": "Your own guild id",
         "IP" : "Here you put your ASF panel IP:PORT",
-        "IPC_PASSWORD" : "Here you put your ASF IPC password"
+        "IPC_PASSWORD" : "Here you put your ASF IPC password",
+        "SSL_STAT": "http or https"
     },
     "input" : {
-        "CHANNEL_ID": "FreeStuff Bot channel ID"
+        "CHANNEL_ID": "Relay bot channel ID (relayed from SteamDB Discord server <#845984309638463488>)"
     },
-    "TZ" : "Europe/Berlin"
+    "TZ" : "Put your Timezone here (luxon) eg. Europe/Berlin"
 }
