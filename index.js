@@ -6,11 +6,11 @@ const client = new Discord.Client({ intents: 34815 });
 
 // TODO: status CardsFarmer
 
-const re1 = /(addlicense|redeempoints)\sasf\s(?:s\/|)((?:\d+[,\s]*)+)/gi;
+const re1 = /`!(addlicense|redeempoints)\s+ASF\s+(.+?)`/i;
 
 const apiBot = ["rename", "pause", "resume", "start", "stop", "addlicense", "redeempoints"];
 const apiASF = ["exit", "restart", "update"];
-const BotVersion = "v2.1.1";
+const BotVersion = "v2.3.1";
 
 const ASF_ICON = "https://raw.githubusercontent.com/JustArchiNET/ArchiSteamFarm/refs/heads/main/resources/ASF_184x184.png";
 
@@ -58,41 +58,47 @@ client.on("interactionCreate", async (interaction) => {
         let botname = interaction.options.getString("botname");
 
         if (!botname) {
-          basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName}`);
-        
+          basicCLog(`> ${interaction.user.tag} executed ${interaction.commandName}\n+ + + + + + + + + + +`, true);
+
           switch (interaction.commandName) {
             case "pause":
               body = {
                 "Permanent": true,
                 "ResumeInSeconds": 0
               };
-        
+
               if ((time = Math.abs(interaction.options.getInteger("time"))) != 0) {
                 body.Permanent = false;
                 body.ResumeInSeconds = time;
               }
-        
+
               response = await responseBodyP(body);
               basicCLog(response.message);
               return await interaction.editReply(basicEmbed(response.message, response.color));
-        
+
             case "addlicense":
+
+              if (!interaction.options.getString("app_ids") && !interaction.options.getString("package_ids")) {
+                await interaction.reply({ content: "You must specify either app_ids or package_ids.", ephemeral: true });
+                return;
+              }
+
               body = {
-                Apps: interaction.options.getString("license_ids").split(/[,\s]+/),
-                Packages: interaction.options.getString("license_ids").split(/[,\s]+/),
+                Apps: (interaction.options.getString("app_ids") || "").split(/[,\s]+/).filter(Boolean),
+                Packages: (interaction.options.getString("package_ids") || "").split(/[,\s]+/).filter(Boolean),
               };
-        
+
               response = await responseBodyAL(body);
               basicCLog(response);
               return await interaction.editReply(basicEmbed(response, colorBase));
-        
+
             case "redeempoints":
               IDs = interaction.options.getString("item_ids").split(/[,\s]+/);
-        
+
               response = await responseBodyRP(IDs);
               basicCLog(response);
               return await interaction.editReply(basicEmbed(response, colorBase));
-        
+
             default:
               response = await sendIPC(interaction.commandName);
               basicCLog(response.message);
@@ -101,7 +107,7 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         else if (bots.includes(botname)) {
-          basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName} for <${botname}>`)
+          basicCLog(`> ${interaction.user.tag} executed ${interaction.commandName} for <${botname}>\n+ + + + + + + + + + +`, true)
 
           switch (interaction.commandName) {
             case "rename":
@@ -110,7 +116,7 @@ client.on("interactionCreate", async (interaction) => {
               };
 
               response = await responseBodyRen(body, botname);
- 
+
               basicCLog(response.message);
               return await interaction.editReply(basicEmbed(response.message, response.color));
 
@@ -119,128 +125,157 @@ client.on("interactionCreate", async (interaction) => {
                 "Permanent": true,
                 "ResumeInSeconds": 0
               };
-          
+
               if ((time = Math.abs(interaction.options.getInteger("time"))) != 0) {
                 body.Permanent = false;
                 body.ResumeInSeconds = time;
               }
-          
+
               response = await responseBodyP(body, botname);
               basicCLog(response.message);
               return await interaction.editReply(basicEmbed(response.message, response.color));
-          
+
             case "addlicense":
-              body = {
-                Apps: interaction.options.getString("license_ids").split(/[,\s]+/),
-                Packages: interaction.options.getString("license_ids").split(/[,\s]+/),
+
+              if (!interaction.options.getString("app_ids") && !interaction.options.getString("package_ids")) {
+                await interaction.reply({ content: "You must specify either app_ids or package_ids.", ephemeral: true });
+                return;
               };
-          
+
+              body = {
+                Apps: (interaction.options.getString("app_ids") || "").split(/[,\s]+/).filter(Boolean),
+                Packages: (interaction.options.getString("package_ids") || "").split(/[,\s]+/).filter(Boolean),
+              };
+
               response = await responseBodyAL(body, botname);
               basicCLog(response);
               return await interaction.editReply(basicEmbed(response, colorBase));
-          
+
             case "redeempoints":
               IDs = interaction.options.getString("item_ids").split(/[,\s]+/);
-          
+
               response = await responseBodyRP(IDs, botname);
               basicCLog(response);
               return await interaction.editReply(basicEmbed(response, colorBase));
-          
+
             default:
               response = await sendIPC(interaction.commandName, botname);
               basicCLog(response.message);
               return await interaction.editReply(basicEmbed(response.message, response.color));
-          }
+          };
         };
       }
 
-    else {
-      basicCLog("Add Bots in ASF first!");
-      return interaction.editReply(basicEmbed("Add Bots in ASF first!", colorCrit));
-    };
-  }
+      else {
+        basicCLog("Add Bots in ASF first!");
+        return interaction.editReply(basicEmbed("Add Bots in ASF first!", colorCrit));
+      };
+    }
 
     else if (apiASF.includes(interaction.commandName)) {
 
-    basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName}`)
+      basicCLog(`> ${interaction.user.tag} executed ${interaction.commandName}\n+ + + + + + + + + + +`, true)
 
-    if (interaction.commandName === "update") {
-      body = {
-        "Channel": null,
-        "Forced": false
+      if (interaction.commandName === "update") {
+        body = {
+          "Channel": null,
+          "Forced": false
+        };
+
+        response = await responseBodyUp(body)
+        basicCLog(response.message)
+        return await interaction.editReply(basicEmbed(response.message, response.color))
+      }
+
+      else {
+        response = await sendIPC(interaction.commandName);
+        basicCLog(response.message);
+        return await interaction.editReply(basicEmbed(response.message, response.color));
       };
-
-      response = await responseBodyUp(body)
-      basicCLog(response.message)
-      return await interaction.editReply(basicEmbed(response.message, response.color))
     }
 
     else {
-      response = await sendIPC(interaction.commandName);
-      basicCLog(response.message);
-      return await interaction.editReply(basicEmbed(response.message, response.color));
+
+      basicCLog(`> ${interaction.user.tag} executed ${interaction.commandName}\n+ + + + + + + + + + +`, true)
+      switch (interaction.commandName) {
+
+        case "status":
+          let botname = interaction.options.getString("botname");
+          response = await responseBodyStat(botname);
+          await interaction.editReply(response);
+
+          const embedData = response.embeds[0].toJSON();
+          basicCLog(embedData.description);
+          break;
+
+        case "ping":
+          const startTimestamp = Date.now();
+          const latency = Date.now() - startTimestamp;
+          await interaction.editReply(basicEmbed(`Pong! The bots latency is ${latency}ms.`, colorBase));
+          basicCLog(`Pong! The bots latency is ${latency}ms.`);
+          break;
+
+        case "botversion":
+          await interaction.editReply(basicEmbed(BotVersion, colorBase));
+          basicCLog(`Bot Version: ${BotVersion}`);
+          break;
+      };
     };
   }
 
-  else {
-
-    switch (interaction.commandName) {
-
-      case "status":
-        basicCLog(`- - - - - - - - - - -\n> ${interaction.user.tag} executed ${interaction.commandName}`)
-        let botname = interaction.options.getString("botname");
-        response = await responseBodyStat(botname);
-        await interaction.editReply(response);
-        break;
-
-      case "ping":
-        const startTimestamp = Date.now();
-        const latency = Date.now() - startTimestamp;
-        await interaction.editReply(basicEmbed(`Pong! The bots latency is ${latency}ms.`, colorBase));
-        break;
-
-      case "botversion":
-        await interaction.editReply(basicEmbed(BotVersion, colorBase));
-        break;
-    };
-  };
-}
-
   catch (error) {
-  console.error('Error handling command:', error);
-  return await interaction.editReply(basicEmbed("An error occurred while processing your command", colorCrit));
-};
+    console.error('Error handling command:', error);
+    return await interaction.editReply(basicEmbed("An error occurred while processing your command", colorCrit));
+  };
 });
 
 client.on("messageCreate", async (message) => {
   if (message.channel.id != config.input.CHANNEL_ID) return;
 
   for (let i = 0; i < message.embeds.length; i++) {
-    if (message.embeds[i].description === undefined) return;
-    const cmdd = re1.exec(message.embeds[i].description);
+    const desc = message.embeds[i].description;
+    if (!desc) return;
 
-    if (cmdd != null) {
+    const cmdd = re1.exec(desc);
+    if (!cmdd) return;
 
-      if (cmdd[1].toLowerCase() === "addlicense") {
-        let command = {
-          Apps: cmdd[2].split(/[,\s]+/),
-          Packages: cmdd[2].split(/[,\s]+/),
-        };
+    const commandType = cmdd[1].toLowerCase();
+    const dataString = cmdd[2];
 
-        const responseMessage = await responseBodyAL(command);
+    const tokens = dataString.split(/[,\s]+/).filter(Boolean);
 
-        message.channel.send(basicEmbed(responseMessage, colorBase));
+    const apps = [];
+    const packages = [];
+
+    for (const token of tokens) {
+      if (/^a\/\d+$/i.test(token)) {
+        apps.push(token.slice(2));
+      } else if (/^s\/\d+$/i.test(token)) {
+        packages.push(token.slice(2));
+      } else if (/^\d+$/.test(token)) {
+        apps.push(token);
+        packages.push(token);
       }
+    }
 
-      else {
-        let IDs = cmdd[2].split(/[,\s]+/);
-
-        const responseMessage = await responseBodyRP(IDs);
-
-        message.channel.send(basicEmbed(responseMessage, colorBase));
+    if (commandType === "addlicense") {
+      const body = {
+        Apps: apps,
+        Packages: packages
       };
-    };
-  };
+
+      const response = await responseBodyAL(body);
+      message.channel.send(basicEmbed(response, colorBase));
+
+      basicCLog(response, true);
+    } else {
+      const IDs = [...new Set([...apps, ...packages])];
+      const responseMessage = await responseBodyRP(IDs);
+      message.channel.send(basicEmbed(responseMessage, colorBase));
+
+      basicCLog(response, true);
+    }
+  }
 });
 
 async function sendIPC(cmd, bot) {
@@ -567,7 +602,11 @@ function basicEmbed(description, color) {
   return { embeds: [embed] };
 };
 
-function basicCLog(message) {
+
+function basicCLog(message, separator) {
+  if (separator) {
+    console.log(`${getTime()} | - - - - - - - - - - -`);
+  }
 
   if (message.includes('\n')) {
     let lines = message.split('\n');
@@ -581,45 +620,46 @@ function basicCLog(message) {
   };
 };
 
+
 async function responseBodyRen(data, bot) {
-let response
-try {
-  const res = await fetch(
-    `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/${bot}/Rename`,
-    {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: {
-        "Content-Type": "application/json",
-        Authentication: config.security.IPC_PASSWORD,
+  let response
+  try {
+    const res = await fetch(
+      `${config.security.SSL_STAT}://${config.security.IP}/Api/Bot/${bot}/Rename`,
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+          Authentication: config.security.IPC_PASSWORD,
+        }
       }
+    );
+    const body = await res.json();
+
+    if (body.Success) {
+      response = body.Message + `\n **! manual discord bot restart required !**`
+
+      return {
+        message: response,
+        color: colorBase
+      };
     }
-  );
-  const body = await res.json();
 
-  if (body.Success) {
-    response = body.Message + `\n **! manual discord bot restart required !**`
+    else if (!body.Success) {
+      response = body.Message
 
-    return {
-      message: response,
-      color: colorBase
+      return {
+        message: response,
+        color: colorWarn
+      };
     };
   }
 
-  else if (!body.Success) {
-    response = body.Message
-
-    return {
-      message: response,
-      color: colorWarn
-    };
+  catch (error) {
+    console.error("Rename fetch error:", error);
   };
-}
-
-catch (error) {
-  console.error("Rename fetch error:", error);
 };
-}
 
 async function responseBodyStat(bot) {
   let link
@@ -829,21 +869,21 @@ async function responseBodyAL(data, bot) {
   let output = "";
 
   for (let botName of Object.keys(response)) {
-    let apps = response[botName].Apps;
-    let packages = response[botName].Packages;
+    let apps = response[botName].Apps || {};
+    let packages = response[botName].Packages || {};
 
     for (let id of Object.keys(apps)) {
       let appDetail = apps[id];
-      let packageDetail = packages[id];
-
       output += `<${botName}> Apps ID: ${id} | Status: ${await getTranslation("EResult", appDetail.Result)} | Status Detail: ${await getTranslation("EPurchaseResultDetail", appDetail.PurchaseResultDetail)}\n`;
+    }
 
+    for (let id of Object.keys(packages)) {
+      let packageDetail = packages[id];
       output += `<${botName}> Packages ID: ${id} | Status: ${await getTranslation("EResult", packageDetail.Result)} | Status Detail: ${await getTranslation("EPurchaseResultDetail", packageDetail.PurchaseResultDetail)}\n`;
-
-      output += "\n";
-    };
+    }
 
     output += "\n";
+
   };
 
   return output.trim();

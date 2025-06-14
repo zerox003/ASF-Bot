@@ -94,7 +94,7 @@ async function registerCommands() {
 
     const rename = {
         "name": "rename",
-        "description": "Renames given bot along with all its related files (ASF only)",
+        "description": "Renames given bot along with all its related files",
         "options": [
             {
                 "name": "botname",
@@ -160,10 +160,16 @@ async function registerCommands() {
         "description": "Add licences to you account",
         "options": [
             {
-                "name": "license_ids",
-                "description": "The ids to add",
+                "name": "app_ids",
+                "description": "The app ids to add",
                 "type": 3,
-                "required": true
+                "required": false
+            },
+            {
+                "name": "package_ids",
+                "description": "The package ids to add",
+                "type": 3,
+                "required": false
             },
             {
                 "name": "botname",
