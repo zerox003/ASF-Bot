@@ -2,6 +2,51 @@ const Discord = require("discord.js");
 const config = require("./configs/config.json");
 const { DateTime } = require("luxon");
 const fetch = require("node-fetch");
+const fs = require('fs');
+const path = require('path');
+
+const originalError = console.error;
+
+console.error = function(...args) {
+    originalError.apply(console, args);
+    
+    const errorMessage = args.map(arg => {
+        if (arg instanceof Error) {
+            return `${arg.message}\nStack: ${arg.stack}`;
+        }
+        return String(arg);
+    }).join(' ');
+
+    const logFile = path.join(logsDir, 'log.txt');
+    const timestamp = getTime();
+    const logLine = `${timestamp} | ERROR: ${errorMessage}`;
+    
+    fs.appendFileSync(logFile, logLine);
+};
+
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)){
+    fs.mkdirSync(logsDir);
+}
+
+rotateLogFiles();
+
+process.on('uncaughtException', (error) => {
+    const timestamp = getTime();
+    const errorMessage = `${timestamp} | FATAL ERROR: ${error.message}\nStack: ${error.stack}\n`;
+    
+    console.error(errorMessage);
+    fs.appendFileSync(path.join(logsDir, 'log.txt'), errorMessage);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    const timestamp = getTime();
+    const errorMessage = `${timestamp} | UNHANDLED REJECTION: Promise: ${promise}\nReason: ${reason}\n`;
+    
+    console.error(errorMessage);
+    fs.appendFileSync(path.join(logsDir, 'log.txt'), errorMessage);
+});
+
 const client = new Discord.Client({ intents: 34815 });
 
 // TODO: status CardsFarmer
@@ -10,7 +55,7 @@ const re1 = /`!(addlicense|redeempoints)\s+ASF\s+(.+?)`/i;
 
 const apiBot = ["rename", "pause", "resume", "start", "stop", "addlicense", "redeempoints"];
 const apiASF = ["exit", "restart", "update"];
-const BotVersion = "v2.3.1";
+const BotVersion = "v2.4";
 
 const ASF_ICON = "https://raw.githubusercontent.com/JustArchiNET/ArchiSteamFarm/refs/heads/main/resources/ASF_184x184.png";
 
@@ -586,41 +631,6 @@ async function getTranslation(schema, code) {
   };
 };
 
-function basicEmbed(description, color) {
-  let embed = new Discord.EmbedBuilder()
-    .setColor(color)
-    .setAuthor({
-      name: "ASF Rcon Commands",
-      iconURL: ASF_ICON
-    })
-    .setDescription(description)
-    .setTimestamp(Date.now())
-    .setFooter({
-      text: `ASF-Bot ${BotVersion}`,
-      iconURL: `https://cdn.discordapp.com/avatars/${config.bot.ID}/${client.user.avatar}.webp?size=512`,
-    });
-  return { embeds: [embed] };
-};
-
-
-function basicCLog(message, separator) {
-  if (separator) {
-    console.log(`${getTime()} | - - - - - - - - - - -`);
-  }
-
-  if (message.includes('\n')) {
-    let lines = message.split('\n');
-    lines.forEach(line => {
-      console.log(`${getTime()} | ` + line);
-    });
-  }
-
-  else {
-    console.log(`${getTime()} | ` + message);
-  };
-};
-
-
 async function responseBodyRen(data, bot) {
   let response
   try {
@@ -967,6 +977,71 @@ async function responseBodyRP(IDs, bot) {
     console.error("Redeem Points fetch error:", error);
   };
 };
+
+function basicEmbed(description, color) {
+  let embed = new Discord.EmbedBuilder()
+    .setColor(color)
+    .setAuthor({
+      name: "ASF Rcon Commands",
+      iconURL: ASF_ICON
+    })
+    .setDescription(description)
+    .setTimestamp(Date.now())
+    .setFooter({
+      text: `ASF-Bot ${BotVersion}`,
+      iconURL: `https://cdn.discordapp.com/avatars/${config.bot.ID}/${client.user.avatar}.webp?size=512`,
+    });
+  return { embeds: [embed] };
+};
+
+
+function rotateLogFiles() {
+    const maxLogs = 5;
+    
+    if (fs.existsSync(path.join(logsDir, 'log.txt'))) {
+        for (let i = maxLogs - 1; i >= 1; i--) {
+            const currentPath = path.join(logsDir, `log${i}.txt`);
+            const nextPath = path.join(logsDir, `log${i + 1}.txt`);
+            
+            if (fs.existsSync(currentPath)) {
+                if (i === maxLogs - 1) {
+                    fs.unlinkSync(currentPath);
+                } else {
+                    fs.renameSync(currentPath, nextPath);
+                }
+            }
+        }
+        
+        fs.renameSync(
+            path.join(logsDir, 'log.txt'),
+            path.join(logsDir, 'log1.txt')
+        );
+    }
+}
+
+function basicCLog(message, separator) {
+    const logFile = path.join(logsDir, 'log.txt');
+    const timestamp = getTime();
+    
+    if (separator) {
+        const separatorLine = `${timestamp} | - - - - - - - - - - -\n`;
+        console.log(separatorLine.trim());
+        fs.appendFileSync(logFile, separatorLine);
+    }
+    
+    if (message.includes('\n')) {
+        let lines = message.split('\n');
+        lines.forEach(line => {
+            const logLine = `${timestamp} | ${line}\n`;
+            console.log(logLine.trim());
+            fs.appendFileSync(logFile, logLine);
+        });
+    } else {
+        const logLine = `${timestamp} | ${message}\n`;
+        console.log(logLine.trim());
+        fs.appendFileSync(logFile, logLine);
+    }
+}
 
 function getTime(ms) {
   const now = DateTime.local().setZone(config.TZ);
