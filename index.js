@@ -270,8 +270,8 @@ client.on("messageCreate", async (message) => {
       basicCLog(response, true);
     } else {
       const IDs = [...new Set([...apps, ...packages])];
-      const responseMessage = await responseBodyRP(IDs);
-      message.channel.send(basicEmbed(responseMessage, colorBase));
+      const response = await responseBodyRP(IDs);
+      message.channel.send(basicEmbed(response, colorBase));
 
       basicCLog(response, true);
     }
